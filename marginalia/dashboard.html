@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Marginalia</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="container">
+    <a href="index.html" class="brand">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 20L14.5 9.5L18 13L7.5 23.5H4V20Z" fill="#C89B3C"/>
+        <path d="M16 5.5L18.5 3C19.3 2.2 20.6 2.2 21.4 3C22.2 3.8 22.2 5.1 21.4 5.9L18.9 8.4L16 5.5Z" fill="#C89B3C"/>
+      </svg>
+      Marginalia
+    </a>
+    <button class="nav-toggle" aria-label="Toggle menu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="dashboard.html" class="active">Dashboard</a>
+      <a href="create-blog.html">Write</a>
+      <a href="login.html">Log in</a>
+      <a href="register.html" class="nav-cta">Get started</a>
+    </div>
+  </div>
+</nav>
+
+<header class="dash-header">
+  <div class="container">
+    <p class="eyebrow">Jordan Blake's notebook</p>
+    <h1>Your dashboard</h1>
+    <p>Everything you've drafted or published, in one place.</p>
+    <div class="dash-stats">
+      <div class="stat"><span class="stat-num">7</span><span class="stat-label">Total posts</span></div>
+      <div class="stat"><span class="stat-num">4</span><span class="stat-label">Published</span></div>
+      <div class="stat"><span class="stat-num">3</span><span class="stat-label">Drafts</span></div>
+      <div class="stat"><span class="stat-num">312</span><span class="stat-label">Views this week</span></div>
+    </div>
+  </div>
+</header>
+
+<section class="section">
+  <div class="container">
+    <div class="dash-toolbar">
+      <h2>Your posts</h2>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div class="filter-tabs">
+          <button class="active" data-status="all">All</button>
+          <button data-status="published">Published</button>
+          <button data-status="draft">Draft</button>
+        </div>
+        <a href="create-blog.html" class="btn btn-gold">+ New post</a>
+      </div>
+    </div>
+
+    <table class="post-table">
+      <thead>
+        <tr>
+          <th>Post</th>
+          <th>Status</th>
+          <th>Last edited</th>
+          <th>Views</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr data-status="published">
+          <td>
+            <div class="p-title">Setting up a local dev environment, finally without fear</div>
+            <div class="p-excerpt">A walkthrough of the tools I wish someone had explained plainly.</div>
+          </td>
+          <td><span class="status-pill status-published">Published</span></td>
+          <td>Aug 20</td>
+          <td>128</td>
+          <td class="row-actions">
+            <button data-action="edit">Edit</button>
+            <button data-action="delete">Delete</button>
+          </td>
+        </tr>
+        <tr data-status="draft">
+          <td>
+            <div class="p-title">HTML, CSS, and JS are not three separate languages</div>
+            <div class="p-excerpt">They're one conversation happening in three rooms.</div>
+          </td>
+          <td><span class="status-pill status-draft">Draft</span></td>
+          <td>Aug 21</td>
+          <td>&mdash;</td>
+          <td class="row-actions">
+            <button data-action="edit">Edit</button>
+            <button data-action="delete">Delete</button>
+          </td>
+        </tr>
+        <tr data-status="draft">
+          <td>
+            <div class="p-title">Designing a blog interface before you have any blogs</div>
+            <div class="p-excerpt">Notes on building the shell first.</div>
+          </td>
+          <td><span class="status-pill status-draft">Draft</span></td>
+          <td>Aug 22</td>
+          <td>&mdash;</td>
+          <td class="row-actions">
+            <button data-action="edit">Edit</button>
+            <button data-action="delete">Delete</button>
+          </td>
+        </tr>
+        <tr data-status="published">
+          <td>
+            <div class="p-title">Why I stopped waiting for the "right" idea to start writing</div>
+            <div class="p-excerpt">Momentum comes from the page, not before it.</div>
+          </td>
+          <td><span class="status-pill status-published">Published</span></td>
+          <td>Aug 18</td>
+          <td>94</td>
+          <td class="row-actions">
+            <button data-action="edit">Edit</button>
+            <button data-action="delete">Delete</button>
+          </td>
+        </tr>
+        <tr data-status="published">
+          <td>
+            <div class="p-title">A short list of things that helped me learn to code</div>
+            <div class="p-excerpt">Not a roadmap — just what actually stuck.</div>
+          </td>
+          <td><span class="status-pill status-published">Published</span></td>
+          <td>Aug 15</td>
+          <td>76</td>
+          <td class="row-actions">
+            <button data-action="edit">Edit</button>
+            <button data-action="delete">Delete</button>
+          </td>
+        </tr>
+        <tr data-status="draft">
+          <td>
+            <div class="p-title">Notes on responsive layout, three breakpoints in</div>
+            <div class="p-excerpt">What I'd tell myself before starting the CSS.</div>
+          </td>
+          <td><span class="status-pill status-draft">Draft</span></td>
+          <td>Aug 12</td>
+          <td>&mdash;</td>
+          <td class="row-actions">
+            <button data-action="edit">Edit</button>
+            <button data-action="delete">Delete</button>
+          </td>
+        </tr>
+        <tr data-status="published">
+          <td>
+            <div class="p-title">First post: why "Marginalia"</div>
+            <div class="p-excerpt">The name, and what it's meant to promise.</div>
+          </td>
+          <td><span class="status-pill status-published">Published</span></td>
+          <td>Aug 9</td>
+          <td>14</td>
+          <td class="row-actions">
+            <button data-action="edit">Edit</button>
+            <button data-action="delete">Delete</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="form-note" style="margin-top:24px;">This dashboard shows sample data for the Module 1 frontend. Posts will persist for real once a backend and database join in a later module.</div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <span>&copy; 2026 Marginalia. A learning project, Module 1.</span>
+    <a href="create-blog.html">Write a post</a>
+  </div>
+</footer>
+
+<script src="js/app.js"></script>
+</body>
+</html>
