@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const connectDB = require('./config/db');
 
 const authRoutes = require('./routes/auth');
 const blogRoutes = require('./routes/blogs');
@@ -22,6 +23,8 @@ app.use((req, res) => {
   res.status(404).json({ message: 'Route not found.' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Marginalia backend running on http://localhost:${PORT}`);
+connectDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Marginalia backend running on http://localhost:${PORT}`);
+  });
 });

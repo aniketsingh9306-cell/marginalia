@@ -1,3 +1,5 @@
+const API_BASE = 'http://localhost:5000/api';
+
 // ---------- Mobile nav ----------
 document.addEventListener('DOMContentLoaded', () => {
   const toggle = document.querySelector('.nav-toggle');
@@ -6,6 +8,42 @@ document.addEventListener('DOMContentLoaded', () => {
     toggle.addEventListener('click', () => links.classList.toggle('open'));
   }
 });
+
+// ---------- Token helpers ----------
+function saveSession(token, user) {
+  localStorage.setItem('marginalia_token', token);
+  localStorage.setItem('marginalia_user', JSON.stringify(user));
+}
+
+function getToken() {
+  return localStorage.getItem('marginalia_token');
+}
+
+function getUser() {
+  const raw = localStorage.getItem('marginalia_user');
+  return raw ? JSON.parse(raw) : null;
+}
+
+function clearSession() {
+  localStorage.removeItem('marginalia_token');
+  localStorage.removeItem('marginalia_user');
+}
+
+async function apiFetch(path, options = {}) {
+  const token = getToken();
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(options.headers || {}),
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.message || 'Something went wrong. Please try again.');
+  }
+  return data;
+}
 
 // ---------- Field validation helpers ----------
 function setFieldError(fieldEl, message) {
@@ -22,10 +60,20 @@ function isEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
+function showBanner(el, message, isError) {
+  el.textContent = message;
+  el.classList.add('show');
+  if (isError) {
+    el.style.background = '#b5533c';
+  } else {
+    el.style.background = '';
+  }
+}
+
 // ---------- Login form ----------
 const loginForm = document.getElementById('login-form');
 if (loginForm) {
-  loginForm.addEventListener('submit', (e) => {
+  loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     let valid = true;
 
@@ -47,11 +95,19 @@ if (loginForm) {
       setFieldError(pwField, null);
     }
 
-    if (valid) {
-      const banner = document.getElementById('login-success');
-      banner.classList.add('show');
-      banner.textContent = 'Signed in. Taking you to your dashboard \u2026';
-      setTimeout(() => { window.location.href = 'dashboard.html'; }, 700);
+    if (!valid) return;
+
+    const banner = document.getElementById('login-success');
+    try {
+      const data = await apiFetch('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email: emailInput.value.trim(), password: pwInput.value }),
+      });
+      saveSession(data.token, data.user);
+      showBanner(banner, 'Signed in. Taking you to your dashboard \u2026', false);
+      setTimeout(() => { window.location.href = 'dashboard.html'; }, 600);
+    } catch (err) {
+      showBanner(banner, err.message, true);
     }
   });
 }
@@ -59,7 +115,7 @@ if (loginForm) {
 // ---------- Register form ----------
 const registerForm = document.getElementById('register-form');
 if (registerForm) {
-  registerForm.addEventListener('submit', (e) => {
+  registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     let valid = true;
 
@@ -99,50 +155,146 @@ if (registerForm) {
       setFieldError(confirmField, null);
     }
 
-    if (valid) {
-      const banner = document.getElementById('register-success');
-      banner.classList.add('show');
-      banner.textContent = 'Account created. Taking you to sign in \u2026';
-      setTimeout(() => { window.location.href = 'login.html'; }, 800);
+    if (!valid) return;
+
+    const banner = document.getElementById('register-success');
+    try {
+      const data = await apiFetch('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: nameInput.value.trim(),
+          email: emailInput.value.trim(),
+          password: pwInput.value,
+        }),
+      });
+      saveSession(data.token, data.user);
+      showBanner(banner, 'Account created. Taking you to your dashboard \u2026', false);
+      setTimeout(() => { window.location.href = 'dashboard.html'; }, 700);
+    } catch (err) {
+      showBanner(banner, err.message, true);
     }
   });
 }
 
-// ---------- Dashboard: filter tabs + row delete (demo data, in-memory only) ----------
-const filterTabs = document.querySelectorAll('.filter-tabs button');
-if (filterTabs.length) {
-  const rows = document.querySelectorAll('.post-table tbody tr');
-  filterTabs.forEach((tab) => {
-    tab.addEventListener('click', () => {
-      filterTabs.forEach((t) => t.classList.remove('active'));
-      tab.classList.add('active');
-      const status = tab.dataset.status;
-      rows.forEach((row) => {
-        if (status === 'all' || row.dataset.status === status) {
-          row.style.display = '';
-        } else {
-          row.style.display = 'none';
+// ---------- Dashboard: load real posts, filter, delete ----------
+const dashPostTableBody = document.getElementById('dash-post-body');
+if (dashPostTableBody) {
+  const user = getUser();
+  if (!user || !getToken()) {
+    window.location.href = 'login.html';
+  } else {
+    const greetEl = document.getElementById('dash-greeting');
+    if (greetEl) greetEl.textContent = `${user.name}'s notebook`;
+
+    loadDashboard();
+  }
+
+  async function loadDashboard() {
+    try {
+      const data = await apiFetch('/blogs');
+      renderPosts(data.posts);
+    } catch (err) {
+      dashPostTableBody.innerHTML = `<tr><td colspan="5">Could not load posts: ${err.message}</td></tr>`;
+    }
+  }
+
+  function renderPosts(posts) {
+    const totalEl = document.getElementById('stat-total');
+    const pubEl = document.getElementById('stat-published');
+    const draftEl = document.getElementById('stat-draft');
+    const viewsEl = document.getElementById('stat-views');
+
+    const published = posts.filter((p) => p.status === 'published');
+    const drafts = posts.filter((p) => p.status === 'draft');
+    const totalViews = posts.reduce((sum, p) => sum + (p.views || 0), 0);
+
+    if (totalEl) totalEl.textContent = posts.length;
+    if (pubEl) pubEl.textContent = published.length;
+    if (draftEl) draftEl.textContent = drafts.length;
+    if (viewsEl) viewsEl.textContent = totalViews;
+
+    if (posts.length === 0) {
+      dashPostTableBody.innerHTML = `<tr><td colspan="5">No posts yet. <a href="create-blog.html">Write your first one</a>.</td></tr>`;
+      return;
+    }
+
+    dashPostTableBody.innerHTML = posts.map((p) => `
+      <tr data-status="${p.status}" data-id="${p._id}">
+        <td>
+          <div class="p-title"><a href="view-blog.html?id=${p._id}" style="text-decoration:none;color:inherit;">${escapeHtml(p.title)}</a></div>
+          <div class="p-excerpt">${escapeHtml(p.body.slice(0, 80))}${p.body.length > 80 ? '\u2026' : ''}</div>
+        </td>
+        <td><span class="status-pill status-${p.status}">${p.status === 'published' ? 'Published' : 'Draft'}</span></td>
+        <td>${new Date(p.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</td>
+        <td>${p.views || 0}</td>
+        <td class="row-actions">
+          <button data-action="view" data-id="${p._id}">View</button>
+          <button data-action="delete" data-id="${p._id}">Delete</button>
+        </td>
+      </tr>
+    `).join('');
+
+    dashPostTableBody.querySelectorAll('[data-action="view"]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        window.location.href = `view-blog.html?id=${btn.dataset.id}`;
+      });
+    });
+
+    dashPostTableBody.querySelectorAll('[data-action="delete"]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        try {
+          await apiFetch(`/blogs/${id}`, { method: 'DELETE' });
+          loadDashboard();
+        } catch (err) {
+          alert(err.message);
         }
       });
     });
-  });
 
-  document.querySelectorAll('.row-actions [data-action="delete"]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const row = btn.closest('tr');
-      row.style.opacity = '0';
-      row.style.transition = 'opacity 0.2s ease';
-      setTimeout(() => row.remove(), 200);
+    setupFilterTabs();
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function setupFilterTabs() {
+    const filterTabs = document.querySelectorAll('.filter-tabs button');
+    const rows = document.querySelectorAll('#dash-post-body tr[data-status]');
+    filterTabs.forEach((tab) => {
+      tab.onclick = () => {
+        filterTabs.forEach((t) => t.classList.remove('active'));
+        tab.classList.add('active');
+        const status = tab.dataset.status;
+        rows.forEach((row) => {
+          row.style.display = (status === 'all' || row.dataset.status === status) ? '' : 'none';
+        });
+      };
     });
-  });
+  }
+
+  const logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      clearSession();
+      window.location.href = 'login.html';
+    });
+  }
 }
 
-// ---------- Create blog: live preview + word count ----------
+// ---------- Create blog: live preview + word count + real submit ----------
 const editorTitle = document.getElementById('post-title');
 const editorBody = document.getElementById('post-body');
 const editorTag = document.getElementById('post-tag');
 
 if (editorBody) {
+  if (!getToken()) {
+    window.location.href = 'login.html';
+  }
+
   const previewTitle = document.getElementById('preview-title');
   const previewBody = document.getElementById('preview-body');
   const previewTag = document.getElementById('preview-tag');
@@ -175,8 +327,7 @@ if (editorBody) {
 
 const createForm = document.getElementById('create-blog-form');
 if (createForm) {
-  createForm.addEventListener('submit', (e) => {
-    e.preventDefault();
+  async function submitPost(status) {
     let valid = true;
 
     const titleField = document.getElementById('post-title-field');
@@ -195,11 +346,109 @@ if (createForm) {
       setFieldError(bodyField, null);
     }
 
-    if (valid) {
-      const banner = document.getElementById('create-success');
-      banner.classList.add('show');
-      banner.textContent = 'Post saved. Redirecting to your dashboard \u2026';
-      setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
+    if (!valid) return;
+
+    const banner = document.getElementById('create-success');
+    try {
+      await apiFetch('/blogs', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: editorTitle.value.trim(),
+          tag: editorTag.value.trim(),
+          body: editorBody.value.trim(),
+          status,
+        }),
+      });
+      showBanner(banner, status === 'draft' ? 'Draft saved. Redirecting \u2026' : 'Post published. Redirecting \u2026', false);
+      setTimeout(() => { window.location.href = 'dashboard.html'; }, 700);
+    } catch (err) {
+      showBanner(banner, err.message, true);
     }
+  }
+
+  createForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    submitPost('published');
   });
+
+  const draftBtn = document.getElementById('save-draft-btn');
+  if (draftBtn) {
+    draftBtn.addEventListener('click', () => submitPost('draft'));
+  }
+}
+
+// ---------- Home page: load public posts if a container exists ----------
+const homePostGrid = document.getElementById('home-post-grid');
+if (homePostGrid) {
+  apiFetch('/blogs/public')
+    .then((data) => {
+      if (!data.posts.length) return; // keep the static sample cards already in the HTML
+      homePostGrid.innerHTML = data.posts.slice(0, 3).map((p) => `
+        <a href="view-blog.html?id=${p._id}" style="text-decoration:none;color:inherit;">
+          <article class="post-card">
+            <span class="tag">${p.tag}</span>
+            <h3>${p.title}</h3>
+            <p>${p.body.slice(0, 100)}${p.body.length > 100 ? '\u2026' : ''}</p>
+            <div class="meta">BY ${p.authorName.toUpperCase()}</div>
+          </article>
+        </a>
+      `).join('');
+    })
+    .catch(() => { /* backend not running yet — keep static sample content */ });
+}
+
+// ---------- Individual blog detail page ----------
+const postContentEl = document.getElementById('post-content');
+if (postContentEl) {
+  const params = new URLSearchParams(window.location.search);
+  const postId = params.get('id');
+
+  function renderPost(p) {
+    const dateStr = new Date(p.updatedAt).toLocaleDateString(undefined, {
+      year: 'numeric', month: 'short', day: 'numeric',
+    });
+    postContentEl.innerHTML = `
+      <span class="tag">${escapeHtmlSafe(p.tag)}</span>
+      <h1>${escapeHtmlSafe(p.title)}</h1>
+      <div class="meta">
+        <span>BY ${escapeHtmlSafe(p.authorName || '').toUpperCase()}</span>
+        <span>${dateStr}</span>
+        <span>${p.status === 'draft' ? 'DRAFT' : `${p.views || 0} VIEWS`}</span>
+      </div>
+      <div class="body-text">${escapeHtmlSafe(p.body)}</div>
+    `;
+  }
+
+  function escapeHtmlSafe(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
+
+  async function loadPost() {
+    if (!postId) {
+      postContentEl.innerHTML = '<p class="state-msg">No post specified.</p>';
+      return;
+    }
+    // If logged in, try the owner endpoint first (covers drafts too).
+    if (getToken()) {
+      try {
+        const data = await apiFetch(`/blogs/${postId}`);
+        renderPost(data.post);
+        return;
+      } catch (err) {
+        // fall through to public endpoint
+      }
+    }
+    try {
+      const res = await fetch(`${API_BASE}/blogs/public/${postId}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Post not found.');
+      renderPost(data.post);
+    } catch (err) {
+      postContentEl.innerHTML = `<p class="state-msg">${err.message}</p>`;
+    }
+  }
+
+  loadPost();
 }

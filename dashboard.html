@@ -32,15 +32,16 @@
 
 <header class="dash-header">
   <div class="container">
-    <p class="eyebrow">Jordan Blake's notebook</p>
+    <p class="eyebrow" id="dash-greeting">Your notebook</p>
     <h1>Your dashboard</h1>
     <p>Everything you've drafted or published, in one place.</p>
     <div class="dash-stats">
-      <div class="stat"><span class="stat-num">7</span><span class="stat-label">Total posts</span></div>
-      <div class="stat"><span class="stat-num">4</span><span class="stat-label">Published</span></div>
-      <div class="stat"><span class="stat-num">3</span><span class="stat-label">Drafts</span></div>
-      <div class="stat"><span class="stat-num">312</span><span class="stat-label">Views this week</span></div>
+      <div class="stat"><span class="stat-num" id="stat-total">0</span><span class="stat-label">Total posts</span></div>
+      <div class="stat"><span class="stat-num" id="stat-published">0</span><span class="stat-label">Published</span></div>
+      <div class="stat"><span class="stat-num" id="stat-draft">0</span><span class="stat-label">Drafts</span></div>
+      <div class="stat"><span class="stat-num" id="stat-views">0</span><span class="stat-label">Total views</span></div>
     </div>
+    <button id="logout-btn" class="btn btn-ghost" style="border-color:#3a4152;color:#efe9d8;margin-top:20px;">Log out</button>
   </div>
 </header>
 
@@ -68,102 +69,12 @@
           <th></th>
         </tr>
       </thead>
-      <tbody>
-        <tr data-status="published">
-          <td>
-            <div class="p-title">Setting up a local dev environment, finally without fear</div>
-            <div class="p-excerpt">A walkthrough of the tools I wish someone had explained plainly.</div>
-          </td>
-          <td><span class="status-pill status-published">Published</span></td>
-          <td>Aug 20</td>
-          <td>128</td>
-          <td class="row-actions">
-            <button data-action="edit">Edit</button>
-            <button data-action="delete">Delete</button>
-          </td>
-        </tr>
-        <tr data-status="draft">
-          <td>
-            <div class="p-title">HTML, CSS, and JS are not three separate languages</div>
-            <div class="p-excerpt">They're one conversation happening in three rooms.</div>
-          </td>
-          <td><span class="status-pill status-draft">Draft</span></td>
-          <td>Aug 21</td>
-          <td>&mdash;</td>
-          <td class="row-actions">
-            <button data-action="edit">Edit</button>
-            <button data-action="delete">Delete</button>
-          </td>
-        </tr>
-        <tr data-status="draft">
-          <td>
-            <div class="p-title">Designing a blog interface before you have any blogs</div>
-            <div class="p-excerpt">Notes on building the shell first.</div>
-          </td>
-          <td><span class="status-pill status-draft">Draft</span></td>
-          <td>Aug 22</td>
-          <td>&mdash;</td>
-          <td class="row-actions">
-            <button data-action="edit">Edit</button>
-            <button data-action="delete">Delete</button>
-          </td>
-        </tr>
-        <tr data-status="published">
-          <td>
-            <div class="p-title">Why I stopped waiting for the "right" idea to start writing</div>
-            <div class="p-excerpt">Momentum comes from the page, not before it.</div>
-          </td>
-          <td><span class="status-pill status-published">Published</span></td>
-          <td>Aug 18</td>
-          <td>94</td>
-          <td class="row-actions">
-            <button data-action="edit">Edit</button>
-            <button data-action="delete">Delete</button>
-          </td>
-        </tr>
-        <tr data-status="published">
-          <td>
-            <div class="p-title">A short list of things that helped me learn to code</div>
-            <div class="p-excerpt">Not a roadmap — just what actually stuck.</div>
-          </td>
-          <td><span class="status-pill status-published">Published</span></td>
-          <td>Aug 15</td>
-          <td>76</td>
-          <td class="row-actions">
-            <button data-action="edit">Edit</button>
-            <button data-action="delete">Delete</button>
-          </td>
-        </tr>
-        <tr data-status="draft">
-          <td>
-            <div class="p-title">Notes on responsive layout, three breakpoints in</div>
-            <div class="p-excerpt">What I'd tell myself before starting the CSS.</div>
-          </td>
-          <td><span class="status-pill status-draft">Draft</span></td>
-          <td>Aug 12</td>
-          <td>&mdash;</td>
-          <td class="row-actions">
-            <button data-action="edit">Edit</button>
-            <button data-action="delete">Delete</button>
-          </td>
-        </tr>
-        <tr data-status="published">
-          <td>
-            <div class="p-title">First post: why "Marginalia"</div>
-            <div class="p-excerpt">The name, and what it's meant to promise.</div>
-          </td>
-          <td><span class="status-pill status-published">Published</span></td>
-          <td>Aug 9</td>
-          <td>14</td>
-          <td class="row-actions">
-            <button data-action="edit">Edit</button>
-            <button data-action="delete">Delete</button>
-          </td>
-        </tr>
+      <tbody id="dash-post-body">
+        <tr><td colspan="5">Loading your posts&hellip;</td></tr>
       </tbody>
     </table>
 
-    <div class="form-note" style="margin-top:24px;">This dashboard shows sample data for the Module 1 frontend. Posts will persist for real once a backend and database join in a later module.</div>
+    <div class="form-note" style="margin-top:24px;">Posts are loaded live from the Marginalia backend API and persist in MongoDB. Click a post title to view it on its own page.</div>
   </div>
 </section>
 
