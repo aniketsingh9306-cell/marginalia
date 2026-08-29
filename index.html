@@ -89,7 +89,14 @@
         <p class="eyebrow">From the notebook</p>
         <h2>Recent entries</h2>
       </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <input type="text" id="home-search" placeholder="Search posts&hellip;" style="font-family:var(--font-body);font-size:0.9rem;padding:10px 14px;border:1px solid var(--line);border-radius:var(--radius);min-width:200px;">
+        <select id="home-tag-filter" style="font-family:var(--font-body);font-size:0.9rem;padding:10px 14px;border:1px solid var(--line);border-radius:var(--radius);background:#fff;">
+          <option value="all">All categories</option>
+        </select>
+      </div>
     </div>
+    <p class="preview-empty" id="home-empty-state" style="display:none;color:var(--text-muted);font-style:italic;margin-bottom:24px;">No posts match your search.</p>
     <div class="post-grid" id="home-post-grid">
       <article class="post-card">
         <span class="tag">Process</span>
@@ -123,7 +130,7 @@
 
 <footer class="site-footer">
   <div class="container">
-    <span>&copy; 2026 Marginalia. A learning project, Module 1.</span>
+    <span>&copy; 2026 Marginalia. A learning project, Module 4.</span>
     <a href="dashboard.html">Dashboard</a>
   </div>
 </footer>

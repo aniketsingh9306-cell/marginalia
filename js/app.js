@@ -189,13 +189,23 @@ if (dashPostTableBody) {
     loadDashboard();
   }
 
-  async function loadDashboard() {
+  async function loadDashboard(searchTerm) {
     try {
-      const data = await apiFetch('/blogs');
+      const query = searchTerm && searchTerm.trim() ? `?search=${encodeURIComponent(searchTerm.trim())}` : '';
+      const data = await apiFetch(`/blogs${query}`);
       renderPosts(data.posts);
     } catch (err) {
       dashPostTableBody.innerHTML = `<tr><td colspan="5">Could not load posts: ${err.message}</td></tr>`;
     }
+  }
+
+  const searchInput = document.getElementById('dash-search');
+  if (searchInput) {
+    let debounceTimer;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => loadDashboard(searchInput.value), 300);
+    });
   }
 
   function renderPosts(posts) {
@@ -229,6 +239,7 @@ if (dashPostTableBody) {
         <td>${p.views || 0}</td>
         <td class="row-actions">
           <button data-action="view" data-id="${p._id}">View</button>
+          <button data-action="edit" data-id="${p._id}">Edit</button>
           <button data-action="delete" data-id="${p._id}">Delete</button>
         </td>
       </tr>
@@ -237,6 +248,12 @@ if (dashPostTableBody) {
     dashPostTableBody.querySelectorAll('[data-action="view"]').forEach((btn) => {
       btn.addEventListener('click', () => {
         window.location.href = `view-blog.html?id=${btn.dataset.id}`;
+      });
+    });
+
+    dashPostTableBody.querySelectorAll('[data-action="edit"]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        window.location.href = `create-blog.html?id=${btn.dataset.id}`;
       });
     });
 
@@ -327,6 +344,50 @@ if (editorBody) {
 
 const createForm = document.getElementById('create-blog-form');
 if (createForm) {
+  const params = new URLSearchParams(window.location.search);
+  const editId = params.get('id');
+  let isEditMode = false;
+
+  const editorEyebrow = document.getElementById('editor-eyebrow');
+  const editorHeading = document.getElementById('editor-heading');
+  const publishBtn = document.getElementById('publish-btn');
+  const draftBtnEl = document.getElementById('save-draft-btn');
+  const cancelBtn = document.getElementById('cancel-edit-btn');
+
+  async function loadForEdit() {
+    try {
+      const data = await apiFetch(`/blogs/${editId}`);
+      const post = data.post;
+      isEditMode = true;
+
+      editorTitle.value = post.title;
+      editorTag.value = post.tag === 'Untagged' ? '' : post.tag;
+      editorBody.value = post.body;
+
+      if (editorEyebrow) editorEyebrow.textContent = 'Editing entry';
+      if (editorHeading) editorHeading.textContent = 'Edit post';
+      if (publishBtn) publishBtn.textContent = post.status === 'draft' ? 'Publish post' : 'Save changes';
+      if (draftBtnEl) draftBtnEl.textContent = 'Save as draft';
+      if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+
+      // Re-run the live preview + word count now that fields are filled.
+      editorTitle.dispatchEvent(new Event('input'));
+    } catch (err) {
+      const banner = document.getElementById('create-success');
+      showBanner(banner, `Could not load that post: ${err.message}`, true);
+    }
+  }
+
+  if (editId) {
+    loadForEdit();
+  }
+
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', () => {
+      window.location.href = 'dashboard.html';
+    });
+  }
+
   async function submitPost(status) {
     let valid = true;
 
@@ -349,17 +410,21 @@ if (createForm) {
     if (!valid) return;
 
     const banner = document.getElementById('create-success');
+    const payload = {
+      title: editorTitle.value.trim(),
+      tag: editorTag.value.trim(),
+      body: editorBody.value.trim(),
+      status,
+    };
+
     try {
-      await apiFetch('/blogs', {
-        method: 'POST',
-        body: JSON.stringify({
-          title: editorTitle.value.trim(),
-          tag: editorTag.value.trim(),
-          body: editorBody.value.trim(),
-          status,
-        }),
-      });
-      showBanner(banner, status === 'draft' ? 'Draft saved. Redirecting \u2026' : 'Post published. Redirecting \u2026', false);
+      if (isEditMode) {
+        await apiFetch(`/blogs/${editId}`, { method: 'PUT', body: JSON.stringify(payload) });
+        showBanner(banner, status === 'draft' ? 'Saved as draft. Redirecting \u2026' : 'Changes saved. Redirecting \u2026', false);
+      } else {
+        await apiFetch('/blogs', { method: 'POST', body: JSON.stringify(payload) });
+        showBanner(banner, status === 'draft' ? 'Draft saved. Redirecting \u2026' : 'Post published. Redirecting \u2026', false);
+      }
       setTimeout(() => { window.location.href = 'dashboard.html'; }, 700);
     } catch (err) {
       showBanner(banner, err.message, true);
@@ -377,24 +442,83 @@ if (createForm) {
   }
 }
 
-// ---------- Home page: load public posts if a container exists ----------
+// ---------- Home page: load public posts, with search + category filter ----------
 const homePostGrid = document.getElementById('home-post-grid');
 if (homePostGrid) {
-  apiFetch('/blogs/public')
-    .then((data) => {
-      if (!data.posts.length) return; // keep the static sample cards already in the HTML
-      homePostGrid.innerHTML = data.posts.slice(0, 3).map((p) => `
-        <a href="view-blog.html?id=${p._id}" style="text-decoration:none;color:inherit;">
-          <article class="post-card">
-            <span class="tag">${p.tag}</span>
-            <h3>${p.title}</h3>
-            <p>${p.body.slice(0, 100)}${p.body.length > 100 ? '\u2026' : ''}</p>
-            <div class="meta">BY ${p.authorName.toUpperCase()}</div>
-          </article>
-        </a>
-      `).join('');
-    })
-    .catch(() => { /* backend not running yet — keep static sample content */ });
+  const homeSearchInput = document.getElementById('home-search');
+  const homeTagSelect = document.getElementById('home-tag-filter');
+  const homeEmptyState = document.getElementById('home-empty-state');
+  let hasRealData = false; // becomes true once we know the backend has published posts
+
+  function renderHomePosts(posts) {
+    if (!posts.length) {
+      homePostGrid.style.display = 'none';
+      if (homeEmptyState) homeEmptyState.style.display = 'block';
+      return;
+    }
+    homePostGrid.style.display = '';
+    if (homeEmptyState) homeEmptyState.style.display = 'none';
+
+    homePostGrid.innerHTML = posts.slice(0, 12).map((p) => `
+      <a href="view-blog.html?id=${p._id}" style="text-decoration:none;color:inherit;">
+        <article class="post-card">
+          <span class="tag">${p.tag}</span>
+          <h3>${p.title}</h3>
+          <p>${p.body.slice(0, 100)}${p.body.length > 100 ? '\u2026' : ''}</p>
+          <div class="meta">BY ${p.authorName.toUpperCase()}</div>
+        </article>
+      </a>
+    `).join('');
+  }
+
+  async function loadHomePosts() {
+    const search = homeSearchInput ? homeSearchInput.value.trim() : '';
+    const tag = homeTagSelect ? homeTagSelect.value : 'all';
+    const qs = new URLSearchParams();
+    if (search) qs.set('search', search);
+    if (tag && tag !== 'all') qs.set('tag', tag);
+
+    try {
+      const data = await apiFetch(`/blogs/public${qs.toString() ? `?${qs.toString()}` : ''}`);
+      if (!hasRealData && !data.posts.length && !search && tag === 'all') {
+        return; // no posts in the DB yet — keep the static sample cards already in the HTML
+      }
+      hasRealData = true;
+      renderHomePosts(data.posts);
+    } catch (err) {
+      // backend not running yet — keep static sample content
+    }
+  }
+
+  async function loadTagOptions() {
+    try {
+      const data = await apiFetch('/blogs/public/tags');
+      if (homeTagSelect && data.tags && data.tags.length) {
+        data.tags.forEach((tag) => {
+          const opt = document.createElement('option');
+          opt.value = tag;
+          opt.textContent = tag;
+          homeTagSelect.appendChild(opt);
+        });
+      }
+    } catch (err) {
+      // ignore — category dropdown just stays at "All categories"
+    }
+  }
+
+  loadHomePosts();
+  loadTagOptions();
+
+  if (homeSearchInput) {
+    let debounceTimer;
+    homeSearchInput.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(loadHomePosts, 300);
+    });
+  }
+  if (homeTagSelect) {
+    homeTagSelect.addEventListener('change', loadHomePosts);
+  }
 }
 
 // ---------- Individual blog detail page ----------

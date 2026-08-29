@@ -32,8 +32,8 @@
 
 <header class="dash-header" style="padding-bottom:32px;">
   <div class="container">
-    <p class="eyebrow">New entry</p>
-    <h1>Write a post</h1>
+    <p class="eyebrow" id="editor-eyebrow">New entry</p>
+    <h1 id="editor-heading">Write a post</h1>
     <p>Draft on the left. See exactly what a reader would see on the right.</p>
   </div>
 </header>
@@ -67,8 +67,9 @@
           <div class="word-count" id="word-count">0 words</div>
 
           <div class="editor-actions">
-            <button type="submit" class="btn btn-primary">Publish post</button>
+            <button type="submit" id="publish-btn" class="btn btn-primary">Publish post</button>
             <button type="button" id="save-draft-btn" class="btn btn-ghost">Save as draft</button>
+            <button type="button" id="cancel-edit-btn" class="btn btn-ghost" style="display:none;">Cancel</button>
           </div>
         </div>
 
@@ -89,7 +90,7 @@
 
 <footer class="site-footer">
   <div class="container">
-    <span>&copy; 2026 Marginalia. A learning project, Module 1.</span>
+    <span>&copy; 2026 Marginalia. A learning project, Module 4.</span>
     <a href="dashboard.html">Dashboard</a>
   </div>
 </footer>
