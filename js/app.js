@@ -9,6 +9,25 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// ---------- Nav auth state (Log in/Get started vs Profile/Log out) ----------
+document.addEventListener('DOMContentLoaded', () => {
+  const loggedIn = !!getToken();
+  document.querySelectorAll('.nav-guest-item').forEach((el) => {
+    el.style.display = loggedIn ? 'none' : '';
+  });
+  document.querySelectorAll('.nav-user-item').forEach((el) => {
+    el.classList.toggle('show', loggedIn);
+  });
+
+  const navLogoutBtn = document.getElementById('nav-logout-btn');
+  if (navLogoutBtn) {
+    navLogoutBtn.addEventListener('click', () => {
+      clearSession();
+      window.location.href = 'login.html';
+    });
+  }
+});
+
 // ---------- Token helpers ----------
 function saveSession(token, user) {
   localStorage.setItem('marginalia_token', token);
@@ -575,4 +594,123 @@ if (postContentEl) {
   }
 
   loadPost();
+}
+
+// ---------- Profile page ----------
+const profileContent = document.getElementById('profile-content');
+if (profileContent) {
+  if (!getToken()) {
+    window.location.href = 'login.html';
+  } else {
+    loadProfile();
+  }
+
+  async function loadProfile() {
+    try {
+      const data = await apiFetch('/auth/me');
+      const loadingEl = document.getElementById('profile-loading');
+      if (loadingEl) loadingEl.style.display = 'none';
+      profileContent.style.display = 'block';
+
+      const avatarEl = document.getElementById('profile-avatar');
+      if (avatarEl) avatarEl.textContent = (data.user.name || '?').charAt(0).toUpperCase();
+
+      document.getElementById('meta-name').textContent = data.user.name;
+      document.getElementById('meta-email').textContent = data.user.email;
+      document.getElementById('meta-joined').textContent = new Date(data.user.joinedAt).toLocaleDateString(undefined, {
+        year: 'numeric', month: 'long', day: 'numeric',
+      });
+      document.getElementById('profile-total').textContent = data.stats.total;
+      document.getElementById('profile-published').textContent = data.stats.published;
+      document.getElementById('profile-drafts').textContent = data.stats.drafts;
+
+      const nameInput = document.getElementById('profile-name');
+      if (nameInput) nameInput.value = data.user.name;
+    } catch (err) {
+      const loadingEl = document.getElementById('profile-loading');
+      if (loadingEl) loadingEl.textContent = `Could not load your profile: ${err.message}`;
+    }
+  }
+
+  const nameForm = document.getElementById('name-form');
+  if (nameForm) {
+    nameForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nameField = document.getElementById('name-field');
+      const nameInput = document.getElementById('profile-name');
+      const banner = document.getElementById('name-success');
+
+      if (!nameInput.value.trim() || nameInput.value.trim().length < 2) {
+        setFieldError(nameField, 'Name must be at least 2 characters.');
+        return;
+      }
+      setFieldError(nameField, null);
+
+      try {
+        const data = await apiFetch('/auth/me', {
+          method: 'PUT',
+          body: JSON.stringify({ name: nameInput.value.trim() }),
+        });
+        saveSession(data.token, data.user);
+        document.getElementById('meta-name').textContent = data.user.name;
+        const avatarEl = document.getElementById('profile-avatar');
+        if (avatarEl) avatarEl.textContent = (data.user.name || '?').charAt(0).toUpperCase();
+        showBanner(banner, 'Name updated.', false);
+      } catch (err) {
+        showBanner(banner, err.message, true);
+      }
+    });
+  }
+
+  const passwordForm = document.getElementById('password-form');
+  if (passwordForm) {
+    passwordForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      let valid = true;
+
+      const currentField = document.getElementById('current-password-field');
+      const currentInput = document.getElementById('current-password');
+      if (!currentInput.value) {
+        setFieldError(currentField, 'Enter your current password.');
+        valid = false;
+      } else {
+        setFieldError(currentField, null);
+      }
+
+      const newField = document.getElementById('new-password-field');
+      const newInput = document.getElementById('new-password');
+      if (newInput.value.length < 6) {
+        setFieldError(newField, 'New password must be at least 6 characters.');
+        valid = false;
+      } else {
+        setFieldError(newField, null);
+      }
+
+      if (!valid) return;
+
+      const banner = document.getElementById('password-success');
+      try {
+        await apiFetch('/auth/me', {
+          method: 'PUT',
+          body: JSON.stringify({
+            currentPassword: currentInput.value,
+            newPassword: newInput.value,
+          }),
+        });
+        showBanner(banner, 'Password updated.', false);
+        currentInput.value = '';
+        newInput.value = '';
+      } catch (err) {
+        showBanner(banner, err.message, true);
+      }
+    });
+  }
+
+  const logoutBtnProfile = document.getElementById('logout-btn-profile');
+  if (logoutBtnProfile) {
+    logoutBtnProfile.addEventListener('click', () => {
+      clearSession();
+      window.location.href = 'login.html';
+    });
+  }
 }

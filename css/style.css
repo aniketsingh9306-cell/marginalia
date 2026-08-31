@@ -131,6 +131,16 @@ textarea:focus-visible {
   background: var(--gold);
 }
 
+.nav-user-item { display: none; }
+.nav-user-item.show { display: inline; }
+.nav-guest-item.hide { display: none; }
+.nav-logout-link { background: none; border: none; cursor: pointer; font-family: var(--font-body); font-size: 0.92rem; font-weight: 500; color: var(--text-on-ink-muted); padding: 0; }
+.nav-logout-link:hover { color: var(--text-on-ink); }
+@media (max-width: 760px) {
+  .nav-user-item.show { padding: 12px 0; width: 100%; text-align: left; }
+  .nav-logout-link.show { display: block; }
+}
+
 .nav-cta {
   background: var(--gold);
   color: var(--ink) !important;
