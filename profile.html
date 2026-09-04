@@ -41,6 +41,10 @@
   }
   .meta-row:last-child { border-bottom: none; }
   .meta-row span:first-child { color: var(--text-muted); font-family: var(--font-mono); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  @media (max-width: 480px) {
+    .profile-stats { grid-template-columns: 1fr; }
+    .meta-row { flex-direction: column; align-items: flex-start; gap: 4px; }
+  }
 </style>
 </head>
 <body>
@@ -142,6 +146,7 @@
   </div>
 </footer>
 
+<script src="js/config.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

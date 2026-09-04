@@ -1,71 +1,92 @@
-# Marginalia — Blog App
+# 📝 Marginalia — A Full-Stack Blog Application
 
-A small full-stack blog app built as a learning project.
+Marginalia is a full-stack blogging platform built as a step-by-step learning project — from a static frontend to a database-backed, authenticated, deployable web app.
 
-- **Module 1 (Frontend):** `frontend/` — plain HTML, CSS, and JavaScript. Home, Login, Register, Dashboard, Write, and View Post pages.
-- **Module 2 (Backend):** `backend/` — Node.js + Express REST API with JWT auth.
-- **Module 3 (Database):** the backend stores everything in **MongoDB** via Mongoose. Includes a public "view individual blog" page with a live view counter.
-- **Module 4 (CRUD Operations):** full Create, Read, Update, Delete is wired end-to-end, plus **search** and **category filtering** on both the home page and the dashboard.
+> "A quiet place to draft, not perform."
 
-## Project structure
+---
+
+## ✨ Features
+
+- **Authentication** — register, log in, and stay signed in with JWT
+- **Protected routes** — Dashboard, Write, and Profile pages require login, both on the frontend (redirects) and backend (JWT-checked API routes)
+- **Full CRUD** — create, read, update, and delete blog posts
+- **Drafts & publishing** — save a post as a draft or publish it immediately
+- **Search & filters** — search posts by keyword, filter by category (tag), or by status (draft/published) in your dashboard
+- **Individual post pages** — every post has its own shareable page, with a live view counter
+- **User profile** — see your post stats, update your name, or change your password
+- **Responsive design** — works on desktop, tablet, and mobile
+- **Real database** — MongoDB via Mongoose, not flat files
+
+## 🧱 Tech stack
+
+| Layer      | Technology                          |
+|------------|---------------------------------------|
+| Frontend   | HTML, CSS, vanilla JavaScript          |
+| Backend    | Node.js, Express                       |
+| Database   | MongoDB (Mongoose)                     |
+| Auth       | JWT (jsonwebtoken) + bcrypt password hashing |
+| Deployment | Backend → Render · Frontend → Netlify or Vercel |
+
+## 📁 Project structure
 
 ```
 marginalia/
 ├── backend/
 │   ├── server.js
 │   ├── config/
-│   │   └── db.js          # MongoDB connection
+│   │   └── db.js              # MongoDB connection
 │   ├── models/
-│   │   ├── User.js        # Mongoose schema for users
-│   │   └── Blog.js        # Mongoose schema for blog posts
+│   │   ├── User.js
+│   │   └── Blog.js
 │   ├── routes/
-│   │   ├── auth.js        # register, login, me
-│   │   └── blogs.js       # create, list, view, update, delete posts
+│   │   ├── auth.js            # register, login, profile (get/update)
+│   │   └── blogs.js           # create, list, search, view, update, delete
 │   ├── middleware/
-│   │   └── auth.js        # JWT verification
+│   │   └── auth.js            # JWT verification
 │   ├── package.json
 │   └── .env.example
-└── frontend/
-    ├── index.html
-    ├── login.html
-    ├── register.html
-    ├── dashboard.html
-    ├── create-blog.html
-    ├── view-blog.html     # NEW — individual blog detail page
-    ├── css/style.css
-    └── js/app.js
+├── frontend/
+│   ├── index.html             # Home — published posts, search, category filter
+│   ├── login.html
+│   ├── register.html
+│   ├── dashboard.html         # your posts — search, filter, edit, delete
+│   ├── create-blog.html       # write & edit posts, live preview
+│   ├── view-blog.html         # individual post page
+│   ├── profile.html           # account details, stats, name/password update
+│   ├── css/style.css
+│   └── js/
+│       ├── config.js          # API base URL — edit this after deploying
+│       └── app.js
+├── render.yaml                 # Render deployment config (backend)
+├── netlify.toml                 # Netlify deployment config (frontend)
+└── vercel.json                  # Vercel deployment config (frontend, alternative)
 ```
 
-## 1. Set up MongoDB (free, cloud-hosted)
+## 🚀 Getting started locally
 
-You don't need to install a database locally — MongoDB Atlas gives you a free cloud database.
+### 1. Set up MongoDB (free, cloud-hosted)
 
-1. Create a free account at https://www.mongodb.com/cloud/atlas/register
-2. Create a free **M0** cluster (takes a couple of minutes to spin up)
-3. Under **Database Access**, add a database user with a username and password
-4. Under **Network Access**, click "Add IP Address" → "Allow access from anywhere" (fine for learning/testing)
-5. Click **Connect** → **Drivers** → copy the connection string. It looks like:
-   ```
-   mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
-   ```
-6. Add `/marginalia` before the `?` so it points at a database named `marginalia`:
+1. Create a free account at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas/register)
+2. Create a free **M0** cluster
+3. Under **Database Access**, add a database user + password
+4. Under **Network Access**, allow access from anywhere (fine for learning)
+5. Click **Connect → Drivers**, copy the connection string, and add `/marginalia` before the `?`:
    ```
    mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/marginalia?retryWrites=true&w=majority
    ```
 
-(If you already have MongoDB installed locally, you can skip Atlas and use `mongodb://127.0.0.1:27017/marginalia` instead — see `.env.example`.)
+### 2. Start the backend
 
-## 2. Start the backend
-
-```
+```bash
 cd backend
 npm install
-copy .env.example .env      (Mac/Linux: cp .env.example .env)
+cp .env.example .env    # Windows: copy .env.example .env
 ```
 
-Open `.env` and paste in your real `MONGO_URI` and a random `JWT_SECRET`. Then:
+Open `.env` and fill in your real `MONGO_URI` and a random `JWT_SECRET`. Then:
 
-```
+```bash
 npm start
 ```
 
@@ -75,39 +96,72 @@ Connected to MongoDB.
 Marginalia backend running on http://localhost:5000
 ```
 
-If you see a connection error instead, double-check your username/password and that your IP is allowed under Network Access in Atlas.
+### 3. Open the frontend
 
-## 3. Open the frontend
+No build step — just open `frontend/index.html` in your browser, or serve the folder with a static server (e.g. VS Code's "Live Server" extension).
 
-No build step needed — open `frontend/index.html` directly in your browser, or serve the folder with a static server (e.g. the VS Code "Live Server" extension).
+Try the full flow: **Register → Write a post → Dashboard → Edit/Delete → Profile → Log out.**
 
-Flow to try:
-1. **Register** an account → lands on the dashboard
-2. **Write** a post → publish it
-3. Go to the **Dashboard** → click the post title (or **View**) → opens `view-blog.html`, which shows the full post and increases its view count
-4. Click **Edit** on a post in the dashboard → change the title/tag/body → **Save changes**
-5. Use the **search box** in the dashboard toolbar to filter your own posts by title/body
-6. Go back to **Home** — published posts appear there too, pulled live from MongoDB. Try the **search box** and **category dropdown** above the post grid.
-7. Click **Delete** on a post in the dashboard to remove it for good
+## 🌍 Deploying to production
 
-## API reference
+### Backend → Render
 
-| Method | Route                        | Auth required | Description                                          |
-|--------|-------------------------------|:--------------:|--------------------------------------------------------|
-| POST   | `/api/auth/register`          | No             | Create an account, returns a JWT                       |
-| POST   | `/api/auth/login`             | No             | Log in, returns a JWT                                  |
-| GET    | `/api/auth/me`                | Yes            | Get the logged-in user                                 |
-| POST   | `/api/blogs`                   | Yes            | Create a post                                            |
-| GET    | `/api/blogs?search=&tag=`      | Yes            | List your own posts, optionally filtered                |
-| GET    | `/api/blogs/public?search=&tag=` | No           | List published posts, optionally filtered (home page)   |
-| GET    | `/api/blogs/public/tags`       | No             | Distinct list of tags among published posts (category filter) |
-| GET    | `/api/blogs/public/:id`        | No             | View a single published post (increments views)         |
-| GET    | `/api/blogs/:id`               | Yes            | Get one of your own posts (draft or published)           |
-| PUT    | `/api/blogs/:id`               | Yes            | Update one of your posts                                  |
-| DELETE | `/api/blogs/:id`               | Yes            | Delete one of your posts                                  |
+1. Push this repo to GitHub (if you haven't already)
+2. Go to [render.com](https://render.com) → **New → Web Service** → connect your GitHub repo
+3. Render will detect `render.yaml` automatically. If not, set manually:
+   - **Root directory:** `backend`
+   - **Build command:** `npm install`
+   - **Start command:** `npm start`
+4. Add environment variables in Render's dashboard: `MONGO_URI`, `JWT_SECRET`, and (once your frontend is live) `FRONTEND_URL`
+5. Deploy — Render gives you a URL like `https://marginalia-backend.onrender.com`
 
-## Notes
+### Frontend → Netlify or Vercel
 
-- Passwords are hashed with bcrypt before storage; they are never stored in plain text.
-- The frontend stores its JWT in `localStorage` under `marginalia_token`.
-- `backend/.env` is git-ignored — never commit real database credentials.
+**Netlify:**
+1. Go to [netlify.com](https://netlify.com) → **Add new site → Import from GitHub**
+2. It will detect `netlify.toml` automatically (publishes the `frontend` folder)
+3. Deploy — you'll get a URL like `https://your-site.netlify.app`
+
+**Vercel (alternative):**
+1. Go to [vercel.com](https://vercel.com) → **Add New → Project** → import your repo
+2. It will detect `vercel.json` automatically
+3. Deploy — you'll get a URL like `https://your-site.vercel.app`
+
+### Connect the two
+
+After both are deployed:
+
+1. Open `frontend/js/config.js` and replace the URL with your live backend:
+   ```js
+   window.MARGINALIA_API_BASE = 'https://marginalia-backend.onrender.com/api';
+   ```
+2. Commit and push — Netlify/Vercel will auto-redeploy
+3. In your Render backend's environment variables, set `FRONTEND_URL` to your live frontend URL (this locks the API down to your site only)
+
+## 📡 API reference
+
+| Method | Route                    | Auth | Description                                    |
+|--------|---------------------------|:----:|--------------------------------------------------|
+| POST   | `/api/auth/register`      | No   | Create an account, returns a JWT                 |
+| POST   | `/api/auth/login`         | No   | Log in, returns a JWT                             |
+| GET    | `/api/auth/me`            | Yes  | Get your profile + post stats                     |
+| PUT    | `/api/auth/me`            | Yes  | Update your name and/or password                  |
+| POST   | `/api/blogs`               | Yes  | Create a post                                       |
+| GET    | `/api/blogs`               | Yes  | List your own posts (supports `?search=` `?status=` `?tag=`) |
+| GET    | `/api/blogs/public`        | No   | List published posts (supports `?search=` `?tag=`) |
+| GET    | `/api/blogs/public/tags`   | No   | List distinct categories/tags in use               |
+| GET    | `/api/blogs/public/:id`    | No   | View a single published post (increments views)   |
+| GET    | `/api/blogs/:id`           | Yes  | Get one of your own posts (draft or published)     |
+| PUT    | `/api/blogs/:id`           | Yes  | Update one of your posts                           |
+| DELETE | `/api/blogs/:id`           | Yes  | Delete one of your posts                           |
+
+## 🔒 Security notes
+
+- Passwords are hashed with bcrypt — never stored in plain text
+- JWTs are stored in `localStorage` and sent as a `Bearer` token on every protected request
+- Every protected API route re-verifies the JWT server-side (`requireAuth` middleware) — frontend redirects are a UX nicety, not the real security boundary
+- `.env` is git-ignored — never commit real database credentials or secrets
+
+## 🙌 About this project
+
+Built as a self-guided, module-by-module learning project covering the full lifecycle of a web app: frontend, backend, database, auth, CRUD, and deployment.
