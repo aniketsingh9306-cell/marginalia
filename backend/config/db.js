@@ -1,20 +1,36 @@
 const mongoose = require('mongoose');
 
-async function connectDB() {
-  const uri = process.env.MONGO_URI;
+// In serverless environments (like Vercel), each function invocation can
+// reuse a "warm" instance, so we cache the connection on the global object
+// to avoid reconnecting to MongoDB on every request.
+let cached = global._marginaliaMongooseConn;
+if (!cached) {
+  cached = global._marginaliaMongooseConn = { conn: null, promise: null };
+}
 
+async function connectDB() {
+  if (cached.conn) return cached.conn;
+
+  const uri = process.env.MONGO_URI;
   if (!uri) {
-    console.error('MONGO_URI is missing. Add it to your .env file (see .env.example).');
-    process.exit(1);
+    throw new Error('MONGO_URI is missing. Add it to your .env file (see .env.example) or your host\'s environment variables.');
+  }
+
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(uri).then((m) => {
+      console.log('Connected to MongoDB.');
+      return m;
+    });
   }
 
   try {
-    await mongoose.connect(uri);
-    console.log('Connected to MongoDB.');
+    cached.conn = await cached.promise;
   } catch (err) {
-    console.error('Could not connect to MongoDB:', err.message);
-    process.exit(1);
+    cached.promise = null;
+    throw err;
   }
+
+  return cached.conn;
 }
 
 module.exports = connectDB;

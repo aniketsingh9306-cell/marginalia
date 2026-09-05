@@ -1,10 +1,17 @@
 // Marginalia — environment config
 //
-// While developing locally, this points at your local backend.
-// After you deploy the backend (Render, Railway, etc.), replace the URL
-// below with your deployed backend's address, for example:
-//   window.MARGINALIA_API_BASE = 'https://marginalia-backend.onrender.com/api';
+// Locally (opening the HTML files directly, or via a dev server on
+// localhost), this points at your local backend running on port 5000.
 //
-// Keep the '/api' at the end — that's the prefix every route uses.
+// Once deployed to Vercel — where the frontend and backend live under the
+// same domain — it automatically uses a relative "/api" path instead, so
+// no manual editing is needed after deployment.
+//
+// If you deploy the backend somewhere else (Render, Railway, etc.)
+// separately from the frontend, replace the fallback URL below with your
+// backend's full address, e.g. 'https://marginalia-backend.onrender.com/api'.
 
-window.MARGINALIA_API_BASE = 'http://localhost:5000/api';
+(function () {
+  const isLocal = ['localhost', '127.0.0.1', ''].includes(window.location.hostname);
+  window.MARGINALIA_API_BASE = isLocal ? 'http://localhost:5000/api' : '/api';
+})();
