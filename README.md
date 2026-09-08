@@ -166,3 +166,4 @@ After both are deployed:
 
 Built as a self-guided, module-by-module learning project covering the full lifecycle of a web app: frontend, backend, database, auth, CRUD, and deployment.
  
+ 
